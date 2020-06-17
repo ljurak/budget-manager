@@ -1,38 +1,93 @@
 package budget;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Scanner;
 
 public class Main {
 
+    private static final Scanner scanner = new Scanner(System.in);
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        List<PurchaseItem> purchases = new ArrayList<>();
+        BudgetRepository budgetRepository = new BudgetRepository();
 
-        while (scanner.hasNext()) {
-            String[] input = scanner.nextLine().split(" \\$");
-            if (input.length == 2) {
-                PurchaseItem purchase = new PurchaseItem(input[0], new BigDecimal(input[1]));
-                purchases.add(purchase);
+        showMenu();
+        int option;
+        while ((option = scanner.nextInt()) != 0) {
+            System.out.println();
+            switch (option) {
+                case 1:
+                    processAddIncome(budgetRepository);
+                    break;
+                case 2:
+                    processAddPurchase(budgetRepository);
+                    break;
+                case 3:
+                    processGetPurchases(budgetRepository);
+                    break;
+                case 4:
+                    processGetBalance(budgetRepository);
+                    break;
+                default:
+                    System.out.println("Incorrect option! Try again." + System.lineSeparator());
+                    break;
             }
+
+            showMenu();
         }
 
-        for (PurchaseItem purchase : purchases) {
-            System.out.println(purchase);
-        }
-        System.out.println();
-
-        BigDecimal total = countTotal(purchases);
-        System.out.printf("Total: $%s", total);
+        System.out.println(System.lineSeparator() + "Bye!");
     }
 
-    private static BigDecimal countTotal(List<PurchaseItem> purchases) {
-        BigDecimal total = new BigDecimal(0);
-        for (PurchaseItem purchase : purchases) {
-            total = total.add(purchase.getPrice());
+    private static void showMenu() {
+        System.out.println("Choose your action:");
+        System.out.println("1) Add income");
+        System.out.println("2) Add purchase");
+        System.out.println("3) Show list of purchases");
+        System.out.println("4) Balance");
+        System.out.println("0) Exit");
+    }
+
+    private static void processAddIncome(BudgetRepository budgetRepository) {
+        String income = getUserInput("Enter income: ");
+        budgetRepository.addIncome(new BigDecimal(income).setScale(2, RoundingMode.DOWN));
+        System.out.println("Income was added!");
+        System.out.println();
+    }
+
+    private static void processAddPurchase(BudgetRepository budgetRepository) {
+        String name = getUserInput("Enter purchase name: ");
+        String price = getUserInput("Enter its price: ");
+        budgetRepository.addPurchase(name, new BigDecimal(price).setScale(2, RoundingMode.DOWN));
+        System.out.println("Purchase was added!");
+        System.out.println();
+    }
+
+    private static void processGetPurchases(BudgetRepository budgetRepository) {
+        List<BudgetItem> purchases = budgetRepository.getPurchases();
+
+        if (purchases.isEmpty()) {
+            System.out.println("Purchase list is empty");
+        } else {
+            BigDecimal total = budgetRepository.getTotalPurchases();
+            printPurchaseList(purchases, total);
         }
-        return total;
+        System.out.println();
+    }
+
+    private static void processGetBalance(BudgetRepository budgetRepository) {
+        System.out.printf("Balance: $%.2f%n%n", budgetRepository.getTotalBalance());
+    }
+
+    private static String getUserInput(String prompt) {
+        System.out.print(prompt);
+        return scanner.nextLine();
+    }
+
+    private static void printPurchaseList(List<BudgetItem> purchases, BigDecimal total) {
+        purchases.forEach(System.out::println);
+        System.out.printf("Total sum: $%.2f%n", total);
     }
 }

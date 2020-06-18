@@ -10,10 +10,13 @@ public class BudgetItem {
 
     private final BudgetItemType type;
 
-    public BudgetItem(String name, BigDecimal amount, BudgetItemType type) {
+    private final PurchaseCategory category;
+
+    public BudgetItem(String name, BigDecimal amount, BudgetItemType type, PurchaseCategory category) {
         this.name = name;
         this.amount = amount;
         this.type = type;
+        this.category = category;
     }
 
     public String getName() {
@@ -26,6 +29,10 @@ public class BudgetItem {
 
     public BudgetItemType getType() {
         return type;
+    }
+
+    public PurchaseCategory getCategory() {
+        return category;
     }
 
     @Override

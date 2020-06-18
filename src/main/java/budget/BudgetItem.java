@@ -1,8 +1,9 @@
 package budget;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
-public class BudgetItem {
+public class BudgetItem implements Serializable {
 
     private final String name;
 

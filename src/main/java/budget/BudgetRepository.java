@@ -9,12 +9,24 @@ public class BudgetRepository {
 
     private List<BudgetItem> budgetItems = new ArrayList<>();
 
+    public void clearBudgetItems() {
+        budgetItems.clear();
+    }
+
     public void addIncome(BigDecimal amount) {
         budgetItems.add(new BudgetItem("Income", amount, BudgetItemType.INCOME, null));
     }
 
     public void addPurchase(String name, BigDecimal amount, PurchaseCategory category) {
         budgetItems.add(new BudgetItem(name, amount, BudgetItemType.PURCHASE, category));
+    }
+
+    public void addBudgetItem(BudgetItem budgetItem) {
+        budgetItems.add(budgetItem);
+    }
+
+    public List<BudgetItem> getBudgetItems() {
+        return budgetItems;
     }
 
     public List<BudgetItem> getPurchases() {
@@ -32,6 +44,10 @@ public class BudgetRepository {
                 .filter(item -> item.getType() == BudgetItemType.PURCHASE)
                 .filter(item -> item.getCategory() == category)
                 .collect(Collectors.toList());
+    }
+
+    public long getBudgetItemsCount() {
+        return budgetItems.size();
     }
 
     public long getPurchasesCount() {

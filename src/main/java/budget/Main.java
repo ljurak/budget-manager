@@ -1,5 +1,13 @@
 package budget;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -10,6 +18,8 @@ public class Main {
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
+        String filename = args.length > 0 ? args[0] : "purchases.txt";
+
         Scanner scanner = new Scanner(System.in);
         BudgetRepository budgetRepository = new BudgetRepository();
 
@@ -30,6 +40,12 @@ public class Main {
                 case 4:
                     processGetBalance(budgetRepository);
                     break;
+                case 5:
+                    processSave(budgetRepository, filename);
+                    break;
+                case 6:
+                    processLoad(budgetRepository, filename);
+                    break;
                 default:
                     System.out.println("Incorrect option! Try again." + System.lineSeparator());
                     break;
@@ -47,6 +63,8 @@ public class Main {
         System.out.println("2) Add purchase");
         System.out.println("3) Show list of purchases");
         System.out.println("4) Balance");
+        System.out.println("5) Save");
+        System.out.println("6) Load");
         System.out.println("0) Exit");
     }
 
@@ -168,6 +186,58 @@ public class Main {
 
     private static void processGetBalance(BudgetRepository budgetRepository) {
         System.out.printf("Balance: $%.2f%n%n", budgetRepository.getTotalBalance());
+    }
+
+    private static void processSave(BudgetRepository budgetRepository, String filename) {
+        saveBudgetItems(budgetRepository, filename);
+        System.out.println("Purchases were saved!" + System.lineSeparator());
+    }
+
+    private static void processLoad(BudgetRepository budgetRepository, String filename) {
+        loadBudgetItems(budgetRepository, filename);
+        System.out.println("Purchases were loaded!" + System.lineSeparator());
+    }
+
+    private static void saveBudgetItems(BudgetRepository budgetRepository, String filename) {
+        if (filename != null) {
+            try (ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(filename)))) {
+                try {
+                    out.writeLong(budgetRepository.getBudgetItemsCount());
+
+                    for (BudgetItem budgetItem : budgetRepository.getBudgetItems()) {
+                        out.writeObject(budgetItem);
+                    }
+                } catch (IOException e) {
+                    System.out.println("Error occurred: " + e.getMessage());
+                }
+            } catch (IOException e) {
+                System.out.println("Error occurred when trying to write file: " + filename);
+            }
+        }
+    }
+
+    private static void loadBudgetItems(BudgetRepository budgetRepository, String filename) {
+        if (filename != null) {
+            File file = new File(filename);
+
+            if (file.exists() && file.isFile()) {
+                try (ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(new FileInputStream(file)))) {
+                    try {
+                        budgetRepository.clearBudgetItems();
+
+                        long n = in.readLong();
+                        for (int i = 0; i < n; i++) {
+                            BudgetItem budgetItem = (BudgetItem) in.readObject();
+                            budgetRepository.addBudgetItem(budgetItem);
+                        }
+                    } catch (IOException | ClassNotFoundException e) {
+                        System.out.println("Error occurred: " + e.getMessage());
+                    }
+                } catch (IOException e) {
+                    System.out.println("Error occurred when trying to read file: " + filename);
+                }
+            }
+        }
     }
 
     private static String getUserInput(String prompt) {

@@ -2,8 +2,12 @@ package budget;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+
+import static java.util.stream.Collectors.*;
 
 public class BudgetRepository {
 
@@ -32,7 +36,14 @@ public class BudgetRepository {
     public List<BudgetItem> getPurchases() {
         return budgetItems.stream()
                 .filter(item -> item.getType() == BudgetItemType.PURCHASE)
-                .collect(Collectors.toList());
+                .collect(toList());
+    }
+
+    public List<BudgetItem> getPurchasesSorted() {
+        return budgetItems.stream()
+                .filter(item -> item.getType() == BudgetItemType.PURCHASE)
+                .sorted(Comparator.comparing(BudgetItem::getAmount).reversed())
+                .collect(toList());
     }
 
     public List<BudgetItem> getPurchasesByCategory(PurchaseCategory category) {
@@ -43,7 +54,19 @@ public class BudgetRepository {
         return budgetItems.stream()
                 .filter(item -> item.getType() == BudgetItemType.PURCHASE)
                 .filter(item -> item.getCategory() == category)
-                .collect(Collectors.toList());
+                .collect(toList());
+    }
+
+    public List<BudgetItem> getPurchasesByCategorySorted(PurchaseCategory category) {
+        if (category == PurchaseCategory.ALL) {
+            return getPurchasesSorted();
+        }
+
+        return budgetItems.stream()
+                .filter(item -> item.getType() == BudgetItemType.PURCHASE)
+                .filter(item -> item.getCategory() == category)
+                .sorted(Comparator.comparing(BudgetItem::getAmount).reversed())
+                .collect(toList());
     }
 
     public long getBudgetItemsCount() {
@@ -78,6 +101,17 @@ public class BudgetRepository {
             }
         }
         return total;
+    }
+
+    public Map<PurchaseCategory, BigDecimal> getTotalPurchasesWithCategories() {
+        return budgetItems.stream()
+                .collect(
+                        groupingBy(
+                                BudgetItem::getCategory,
+                                () -> new EnumMap<>(PurchaseCategory.class),
+                                reducing(new BigDecimal(0), BudgetItem::getAmount, BigDecimal::add)
+                        )
+                );
     }
 
     public BigDecimal getTotalBalance() {

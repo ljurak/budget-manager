@@ -44,7 +44,7 @@ public class MenuRenderer {
     public void showSortOptions() {
         System.out.println("How do you want to sort?");
         System.out.println("1) Sort all purchases");
-        System.out.println("2) Sort by type");
+        System.out.println("2) Summary by type");
         System.out.println("3) Sort certain type");
         System.out.println("4) Back");
     }

@@ -11,11 +11,14 @@ import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Main {
 
     private static final Scanner scanner = new Scanner(System.in);
+
+    private static final MenuRenderer menu = new MenuRenderer();
 
     public static void main(String[] args) {
         String filename = args.length > 0 ? args[0] : "purchases.txt";
@@ -23,11 +26,15 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         BudgetRepository budgetRepository = new BudgetRepository();
 
-        showMenu();
-        int option;
-        while ((option = Integer.parseInt(scanner.nextLine())) != 0) {
+        while (true) {
+            menu.showMainMenu();
+            int option = Integer.parseInt(scanner.nextLine());
             System.out.println();
+
             switch (option) {
+                case 0:
+                    System.out.println("Bye!");
+                    return;
                 case 1:
                     processAddIncome(budgetRepository);
                     break;
@@ -46,45 +53,14 @@ public class Main {
                 case 6:
                     processLoad(budgetRepository, filename);
                     break;
+                case 7:
+                    processAnalyze(budgetRepository);
+                    break;
                 default:
                     System.out.println("Incorrect option! Try again." + System.lineSeparator());
                     break;
             }
-
-            showMenu();
         }
-
-        System.out.println(System.lineSeparator() + "Bye!");
-    }
-
-    private static void showMenu() {
-        System.out.println("Choose your action:");
-        System.out.println("1) Add income");
-        System.out.println("2) Add purchase");
-        System.out.println("3) Show list of purchases");
-        System.out.println("4) Balance");
-        System.out.println("5) Save");
-        System.out.println("6) Load");
-        System.out.println("0) Exit");
-    }
-
-    private static void showAddPurchaseCategories() {
-        System.out.println("Choose the type of purchase:");
-        System.out.println("1) Food");
-        System.out.println("2) Clothes");
-        System.out.println("3) Entertainment");
-        System.out.println("4) Other");
-        System.out.println("5) Back");
-    }
-
-    private static void showSearchPurchaseCategories() {
-        System.out.println("Choose the type of purchase:");
-        System.out.println("1) Food");
-        System.out.println("2) Clothes");
-        System.out.println("3) Entertainment");
-        System.out.println("4) Other");
-        System.out.println("5) All");
-        System.out.println("6) Back");
     }
 
     private static void processAddIncome(BudgetRepository budgetRepository) {
@@ -95,29 +71,19 @@ public class Main {
     }
 
     private static void processAddPurchase(BudgetRepository budgetRepository) {
-        showAddPurchaseCategories();
-
-        int option;
-        while ((option = Integer.parseInt(scanner.nextLine())) != 5) {
+        while (true) {
+            menu.showAddPurchaseCategories();
+            int option = Integer.parseInt(scanner.nextLine());
             System.out.println();
-            PurchaseCategory category;
-            switch (option) {
-                case 1:
-                    category = PurchaseCategory.FOOD;
-                    break;
-                case 2:
-                    category = PurchaseCategory.CLOTHES;
-                    break;
-                case 3:
-                    category = PurchaseCategory.ENTERTAINMENT;
-                    break;
-                case 4:
-                    category = PurchaseCategory.OTHER;
-                    break;
-                default:
-                    System.out.println("Incorrect option! Try again." + System.lineSeparator());
-                    showAddPurchaseCategories();
-                    continue;
+
+            if (option == 5) {
+                return;
+            }
+
+            PurchaseCategory category = PurchaseCategory.valueOfCategory(option);
+            if (category == null) {
+                System.out.println("Incorrect option! Try again." + System.lineSeparator());
+                continue;
             }
 
             String name = getUserInput("Enter purchase name: ");
@@ -125,11 +91,7 @@ public class Main {
             budgetRepository.addPurchase(name, new BigDecimal(price).setScale(2, RoundingMode.DOWN), category);
             System.out.println("Purchase was added!");
             System.out.println();
-
-            showAddPurchaseCategories();
         }
-
-        System.out.println();
     }
 
     private static void processGetPurchases(BudgetRepository budgetRepository) {
@@ -139,49 +101,25 @@ public class Main {
             return;
         }
 
-        showSearchPurchaseCategories();
-
-        int option;
-        while ((option = Integer.parseInt(scanner.nextLine())) != 6) {
+        while (true) {
+            menu.showSearchPurchaseCategories();
+            int option = Integer.parseInt(scanner.nextLine());
             System.out.println();
-            PurchaseCategory category;
-            switch (option) {
-                case 1:
-                    category = PurchaseCategory.FOOD;
-                    break;
-                case 2:
-                    category = PurchaseCategory.CLOTHES;
-                    break;
-                case 3:
-                    category = PurchaseCategory.ENTERTAINMENT;
-                    break;
-                case 4:
-                    category = PurchaseCategory.OTHER;
-                    break;
-                case 5:
-                    category = PurchaseCategory.ALL;
-                    break;
-                default:
-                    System.out.println("Incorrect option! Try again." + System.lineSeparator());
-                    showSearchPurchaseCategories();
-                    continue;
+
+            if (option == 6) {
+                return;
+            }
+
+            PurchaseCategory category = PurchaseCategory.valueOfCategory(option);
+            if (category == null) {
+                System.out.println("Incorrect option! Try again." + System.lineSeparator());
+                continue;
             }
 
             List<BudgetItem> purchases = budgetRepository.getPurchasesByCategory(category);
-
-            System.out.println(category + ":");
-            if (purchases.isEmpty()) {
-                System.out.println("Purchase list is empty!");
-            } else {
-                BigDecimal total = budgetRepository.getTotalPurchasesByCategory(category);
-                printPurchaseList(purchases, total);
-            }
-
-            System.out.println();
-            showSearchPurchaseCategories();
+            BigDecimal total = budgetRepository.getTotalPurchasesByCategory(category);
+            printPurchaseList(category, purchases, total);
         }
-
-        System.out.println();
     }
 
     private static void processGetBalance(BudgetRepository budgetRepository) {
@@ -196,6 +134,33 @@ public class Main {
     private static void processLoad(BudgetRepository budgetRepository, String filename) {
         loadBudgetItems(budgetRepository, filename);
         System.out.println("Purchases were loaded!" + System.lineSeparator());
+    }
+
+    private static void processAnalyze(BudgetRepository budgetRepository) {
+        while (true) {
+            menu.showSortOptions();
+            int option = Integer.parseInt(scanner.nextLine());
+            System.out.println();
+
+            if (option == 4) {
+                return;
+            }
+
+            switch (option) {
+                case 1:
+                    processSortPurchases(budgetRepository);
+                    break;
+                case 2:
+                    processSummarizePurchases(budgetRepository);
+                    break;
+                case 3:
+                    processSortPurchasesByCategory(budgetRepository);
+                    break;
+                default:
+                    System.out.println("Incorrect option! Try again." + System.lineSeparator());
+                    break;
+            }
+        }
     }
 
     private static void saveBudgetItems(BudgetRepository budgetRepository, String filename) {
@@ -240,13 +205,46 @@ public class Main {
         }
     }
 
+    private static void processSortPurchases(BudgetRepository budgetRepository) {
+        List<BudgetItem> purchases = budgetRepository.getPurchasesSorted();
+        BigDecimal total = budgetRepository.getTotalPurchases();
+        printPurchaseList(PurchaseCategory.ALL, purchases, total);
+    }
+
+    private static void processSortPurchasesByCategory(BudgetRepository budgetRepository) {
+        menu.showSortPurchaseCategories();
+        PurchaseCategory category = PurchaseCategory.valueOfCategory(Integer.parseInt(scanner.nextLine()));
+        System.out.println();
+
+        if (category == null) {
+            return;
+        }
+
+        List<BudgetItem> purchases = budgetRepository.getPurchasesByCategorySorted(category);
+        BigDecimal total = budgetRepository.getTotalPurchasesByCategory(category);
+        printPurchaseList(category, purchases, total);
+    }
+
+    private static void processSummarizePurchases(BudgetRepository budgetRepository) {
+        Map<PurchaseCategory, BigDecimal> purchasesTotals = budgetRepository.getTotalPurchasesWithCategories();
+        purchasesTotals.forEach((category, amount) -> System.out.printf("%s - $%.2f%n", category, amount));
+        System.out.printf("Total sum: $%.2f%n", budgetRepository.getTotalPurchases());
+        System.out.println();
+    }
+
     private static String getUserInput(String prompt) {
         System.out.print(prompt);
         return scanner.nextLine();
     }
 
-    private static void printPurchaseList(List<BudgetItem> purchases, BigDecimal total) {
-        purchases.forEach(System.out::println);
-        System.out.printf("Total sum: $%.2f%n", total);
+    private static void printPurchaseList(PurchaseCategory category, List<BudgetItem> purchases, BigDecimal total) {
+        System.out.println(category + ":");
+        if (purchases.isEmpty()) {
+            System.out.println("Purchase list is empty!");
+        } else {
+            purchases.forEach(System.out::println);
+            System.out.printf("Total sum: $%.2f%n", total);
+        }
+        System.out.println();
     }
 }
